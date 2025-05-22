@@ -1,9 +1,19 @@
-import { Controller, Get, Post, Put, Param, Body, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Param,
+  Body,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager } from '@mikro-orm/core';
 import { User } from './user.entity';
 import { UserRepository } from './user.repository';
 import { AuditLog } from '../audit-log/audit-log.entity';
+import { Company } from '../company/company.entity';
+import { Collection } from '@mikro-orm/core';
 
 @Controller('users')
 export class UserController {
@@ -15,8 +25,28 @@ export class UserController {
   ) {}
 
   @Post()
-  async create(@Body() body: Partial<User>): Promise<User> {
-    const user = this.userRepo.create(body);
+  async create(@Body() body: any): Promise<User> {
+    // Referenz auf Company setzen
+    let companyRef = null;
+    if (body.company?.id) {
+      companyRef = this.em.getReference(Company, body.company.id);
+    }
+
+    // Referenzen für relatedCoworkers erstellen
+    let coworkers = [];
+    if (Array.isArray(body.relatedCoworkers)) {
+      coworkers = body.relatedCoworkers.map((c) =>
+        this.em.getReference(User, c.id)
+      );
+    }
+
+    const user = new User();
+    user.name = body.name;
+    user.email = body.email;
+    user.address = body.address;
+    user.company = companyRef;
+    user.relatedCoworkers = new Collection<User>(user, coworkers);
+
     await this.em.persistAndFlush(user);
 
     const log = this.em.create(AuditLog, {
@@ -30,11 +60,28 @@ export class UserController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: number, @Body() body: Partial<User>): Promise<User> {
+  async update(@Param('id') id: number, @Body() body: any): Promise<User> {
     const user = await this.userRepo.findOne({ id });
     if (!user) throw new NotFoundException('User not found');
 
-    this.userRepo.assign(user, body);
+    // Referenz auf Company aktualisieren
+    if (body.company?.id) {
+      user.company = this.em.getReference(Company, body.company.id);
+    }
+
+    // relatedCoworkers aktualisieren
+    if (Array.isArray(body.relatedCoworkers)) {
+      const coworkers = body.relatedCoworkers.map((c) =>
+        this.em.getReference(User, c.id)
+      );
+      user.relatedCoworkers.set(coworkers);
+    }
+
+    // andere Felder zuweisen
+    user.name = body.name ?? user.name;
+    user.email = body.email ?? user.email;
+    user.address = body.address ?? user.address;
+
     await this.em.flush();
 
     const log = this.em.create(AuditLog, {
