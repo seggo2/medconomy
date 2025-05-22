@@ -3,6 +3,7 @@ import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { PostgreSqlOptions } from '@mikro-orm/postgresql/PostgreSqlMikroORM';
 import { User }              from '../user/user.entity';
 import { Company } from '../company/company.entity';
+import { AuditLog } from '../audit-log/audit-log.entity';
 
 const user = 'postgres';
 const port = 5432;
@@ -21,7 +22,8 @@ const ormConfig: PostgreSqlOptions = {
   debug: true,
   entities: [
     User,
-    Company
+    Company,
+    AuditLog
   ],
   subscribers: [],
   multipleStatements: true,
