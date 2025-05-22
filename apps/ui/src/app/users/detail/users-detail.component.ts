@@ -22,7 +22,7 @@ export class UsersDetailComponent implements OnInit {
   user = signal<User | null>(null);
   users = signal<User[]>([]);
   companies = signal<Company[]>([]);
-  coworkers = signal<User[]>([]); 
+  coworkers = signal<User[]>([]);
 
   form = this.fb.group({
     name: this.fb.control<string | null>(null, Validators.required),
@@ -33,7 +33,8 @@ export class UsersDetailComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.loadUsersAndCompanies();
+    this.loadUsers();
+    this.loadCompanies();
     this.loadUser();
 
     this.form.get('companyId')?.valueChanges.subscribe((companyId) => {
@@ -45,17 +46,15 @@ export class UsersDetailComponent implements OnInit {
     });
   }
 
-  private loadUsersAndCompanies() {
+  private loadUsers() {
     this.userService.getAll().pipe(take(1)).subscribe((allUsers) => {
       this.users.set(allUsers.filter(u => u.id !== this.userId));
+    });
+  }
 
-      const uniqueCompanies = new Map<number, Company>();
-      allUsers.forEach(u => {
-        if (u.company && !uniqueCompanies.has(u.company.id)) {
-          uniqueCompanies.set(u.company.id, u.company);
-        }
-      });
-      this.companies.set(Array.from(uniqueCompanies.values()));
+  private loadCompanies() {
+    this.userService.getCompanies().pipe(take(1)).subscribe((companies) => {
+      this.companies.set(companies);
     });
   }
 
@@ -75,7 +74,6 @@ export class UsersDetailComponent implements OnInit {
       arr.clear();
       coworkerIds.forEach(id => arr.push(this.fb.control(id)));
 
-      // Mitarbeiter derselben Firma setzen
       if (user.company?.id) {
         this.filterCoworkers(user.company.id);
       }
@@ -92,7 +90,9 @@ export class UsersDetailComponent implements OnInit {
   toggleCoworker(id: number, checked: boolean) {
     const arr = this.form.get('relatedCoworkers') as FormArray;
     if (checked) {
-      arr.push(this.fb.control(id));
+      if (!arr.value.includes(id)) {
+        arr.push(this.fb.control(id));
+      }
     } else {
       const idx = arr.controls.findIndex(c => c.value === id);
       if (idx > -1) arr.removeAt(idx);

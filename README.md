@@ -1,52 +1,79 @@
-# Acme
+## Entwicklernotiz von Sefa Gür
 
-## Setup
-```sh
-npm i
-```
-- Make sure Docker is running on your system and port 5432 is not in use
+### Arbeitszeit
 
-### Commands
+* Gestartet: **22.05.2025 um 13:00 Uhr**
+* Beendet: **22.05.2025 um 21:00 Uhr**
+* Pausen: Ja (mehrere kurze Pausen und Einarbeitung in Tailwind & Next.js)
 
-Serve Backend
-```sh
-npm run start:backend
-```
+###  Hinweis zur Datenbank (PostgreSQL)
 
-Serve Frontend
-```sh
-npm run start:ui
-```
+Damit das Frontend vollständig funktioniert, müssen **Firmen in die Datenbank eingefügt werden**. Das User-Formular setzt voraus, dass Firmen vorhanden sind, um Benutzer korrekt zuordnen zu können.
 
-## Tasks
+**Beispiel für eine Firma (JSON):**
 
-- Don't take more than a total of 10 hours to work on this task
-- if you couldn't finish the tasks within this period, still hand in your partial solution. It'll be enough
-  to get to know you and your technical background.
+json
+{
+  "id": 1,
+  "name": "MediTech GmbH"
+}
 
-### Backend
-- Extend the `User` resource for additional properties: x
-  - email
-  - address
-  - company
-  - relatedCoworkers
-- The company should be an entity itself x
-  - One user can belong to one company
-- One user can be related to other users. Those users represent a group of workers that closely work together. x
-- Create a basic controller to fetch, update and create users. x
-- Add an additional feature to track CRUD operations in a separate audit table x
 
-### Frontend
-- Create a list page and a detail page
-- The list page should list the users
-  - The table listing users should be a reusable ui component
-  - use content projection to place element within the table (analogous to Angular Material table)
-- The detail page should show all user details and allow for updates of properties
-  - It should be possible to create a company and assign the user to that company.
-  - Disregard the related co workers for frontend matters
-- You can use the installed packages such as Angular Material and Tailwind
-- Use newest Angular features such as signals
-- Use descriptive coding style and embrace rxjs when necessary
+Die Daten müssen entweder über ein SQL-Insert direkt in PostgreSQL erfolgen oder über einen eigenen Endpunkt zur Erstellung von Firmen, sofern dieser später ergänzt wird.
 
-## Contact
-If you have any questions you can contact me at <a href="mailto:yannick.boetzkes@medconomy.com">yannick.boetzkes@medconomy.com</a># medconomy
+
+
+### Umsetzung und Funktionsweise
+
+#### Backend (NestJS + MikroORM + PostgreSQL)
+
+* Die `User`-Entität wurde erweitert um:
+
+  * `email`, `address`, `company`, `relatedCoworkers`
+* Die `Company`-Entität wurde eingebunden (OneToMany-Beziehung)
+* `relatedCoworkers` ist eine ManyToMany-Beziehung (selbstbezogen)
+* Ein `AuditLog` protokolliert alle `CREATE` und `UPDATE`-Aktionen auf User-Ebene
+
+#### Frontend (Angular , Signals, TailwindCSS)
+
+* **User-Liste**: Zeigt alle User über eine wiederverwendbare Tabelle
+* **User-Detail**:
+
+  * Anzeige und Bearbeitung der Nutzerdaten
+  * Auswahl einer Firma über ein Dropdown (live aus der `/companies` API)
+  * Dynamisches Filtern der Coworker, basierend auf gewählter Firma
+  * Speichern der Daten führt zu einem Update inkl. Audit-Log
+
+#### Technische Highlights:
+
+* Vollständig standalone Angular-Komponenten
+* Reactive Forms + Signals
+* Dynamische Checkbox-Logik für Coworker
+* API-basierte Datenanbindung ohne doppeltes Laden
+
+
+
+### Verbesserungsideen & zukünftige Features!
+
+#### Funktional:
+
+* Eigene **CRUD-Oberfläche für Firmen** (aktuell nur über DB möglich)
+* Eigene Ansicht für **Audit-Logs** (wer hat was wann geändert?)
+* **Login mit Rollen** (Admin vs. Benutzer)
+
+#### UI/UX:
+
+* Such- und Filterfunktion in der User-Tabelle
+* Visuelle Darstellung von Coworker-Gruppen
+
+#### Code/Technik:
+
+* DTO-Validierung im Backend ergänzen
+* `class-validator` nutzen für HTTP-Anfragen
+* Tests für UI-Interaktionen
+
+---
+
+### Persönliches Fazit
+
+Die Aufgabe war fordernd, aber lehrreich. Besonders der Einsatz von Next.js  und TailwindCSS war für mich neu, sodass ich mich erst einarbeiten musste. Dadurch hat sich die Bearbeitungszeit gestreckt. Am Ende konnte ich jedoch ein voll funktionsfähiges Fullstack-Projekt mit sauberer Architektur und erweiterbarer Logik umsetzen. 

@@ -36,4 +36,9 @@ export class UserService {
   update(id: number, user: Partial<User>): Observable<User> {
     return this.http.put<User>(`${this.api}/${id}`, user);
   }
+
+  getCompanies() {
+    return this.http.get<Company[]>(`/api/companies`);
+  }
+  
 }
