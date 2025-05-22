@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -9,10 +9,11 @@ export interface Company {
 
 export interface User {
   id: number;
-  name: string;
-  email: string;
-  address?: string;
-  company?: Company;
+  name: string | null;
+  email: string | null;
+  address?: string | null;
+  company?: Company | null;
+  relatedCoworkers?: User[] | null;
 }
 
 @Injectable({ providedIn: 'root' })
