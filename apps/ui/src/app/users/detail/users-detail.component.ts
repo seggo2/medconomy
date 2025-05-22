@@ -22,6 +22,7 @@ export class UsersDetailComponent implements OnInit {
   user = signal<User | null>(null);
   users = signal<User[]>([]);
   companies = signal<Company[]>([]);
+  coworkers = signal<User[]>([]); 
 
   form = this.fb.group({
     name: this.fb.control<string | null>(null, Validators.required),
@@ -34,6 +35,14 @@ export class UsersDetailComponent implements OnInit {
   ngOnInit() {
     this.loadUsersAndCompanies();
     this.loadUser();
+
+    this.form.get('companyId')?.valueChanges.subscribe((companyId) => {
+      if (companyId) {
+        this.filterCoworkers(companyId);
+      } else {
+        this.coworkers.set([]);
+      }
+    });
   }
 
   private loadUsersAndCompanies() {
@@ -65,7 +74,19 @@ export class UsersDetailComponent implements OnInit {
       const arr = this.form.get('relatedCoworkers') as FormArray;
       arr.clear();
       coworkerIds.forEach(id => arr.push(this.fb.control(id)));
+
+      // Mitarbeiter derselben Firma setzen
+      if (user.company?.id) {
+        this.filterCoworkers(user.company.id);
+      }
     });
+  }
+
+  private filterCoworkers(companyId: number) {
+    const filtered = this.users().filter(
+      u => u.company?.id === companyId && u.id !== this.userId
+    );
+    this.coworkers.set(filtered);
   }
 
   toggleCoworker(id: number, checked: boolean) {
